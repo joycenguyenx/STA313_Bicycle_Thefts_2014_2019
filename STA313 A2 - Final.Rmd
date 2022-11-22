@@ -1,0 +1,133 @@
+---
+title: " \"Lights! Cameras! Action!\": Exploring Bike Thieves’s Favoritism in Toronto"
+author: "Anisha Huq & Joyce (Khanh Linh) Nguyen"
+date: "November 18, 2022"
+output:
+  tufte::tufte_handout: default
+---
+```{r, include=F, echo=F, warning=F, message=F}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(readr)
+
+bicycle_thefts <- read.csv("bicycle-thefts-2014-2019.csv")
+
+glimpse(bicycle_thefts)
+```
+
+# Quick Look at the Problem at hand 
+
+"Lights! Cameras! Action!"
+When we say this, you are thinking of an action-packed movie with great actors and a plot. What if we tell you that the plot is that of bicycle thievery in Toronto? While this may not sound as interesting, there’s more to it than what meets the eye. Bicycles being stolen is not a matter that is of concern to only the Toronto Cycling association but to the greater general audience about safety and risk assessment as well. Although, our analysis would be focusing on insights and motivation that the general cyclist community can infer regarding bicycle purchases, risk assessment, and more. Maybe even understand what the thieves’ favorite bicycle is because there is no plot without understanding the villain’s motive. 
+
+
+# The Timeline of Cycle theft 
+
+```{r, echo=F, warning=F, fig.align='center', fig.width=10, fig.height=6}
+# Number of crimes by years
+bicycle_thefts %>% 
+  ggplot(aes(x=Occurrence_Year)) +
+  geom_histogram(binwidth = 0.5, fill="lightblue", color="black") +
+  scale_x_continuous() +
+  labs(title = "Number of Bicycle Thefts by Years \n 2014 - 2019",
+      x="Occurence Year",
+      y= "Number of Occurences") +
+  theme_minimal()
+```
+
+Before we begin, let us set some background to our story — the usual once upon a time. According to the 2014 - 2019 dataset, more than 20,000 bicycles have been stolen. In order to visualize the frequency of theft throughout the years, we produced a bar chart to find any trends. As observed in our visualization, there were approximately 4000 bicycles stolen in 2018, the highest in the five-year period.om the given chart, it can also be seen that since 2014 there has been an increase in the trend of bicycle theft, with a small fall in 2019. Although, it is not as surprising if the overall crime rate in the city has increased because if that is the case, bicycles are easiest to steal due to their nature of being easily disguised. Therefore, as we see bicycle thefts rising, it makes sense for us to find which month is the thief’s favorite month so that we can exercise greater caution. 
+
+# The Months of Caution 
+
+```{r, echo=F, warning=F, fig.align='center', fig.width=10, fig.height=6}
+# Number of crimes by months
+
+bicycle_thefts <- bicycle_thefts %>%
+  mutate(Occurrence_Month = case_when(Occurrence_Month == 1 ~ "Jan",
+                                       Occurrence_Month == 2 ~ "Feb",
+                                       Occurrence_Month == 3 ~ "Mar",
+                                       Occurrence_Month == 4 ~ "Apr",
+                                       Occurrence_Month == 5 ~ "May",
+                                       Occurrence_Month == 6 ~ "Jun",
+                                       Occurrence_Month == 7 ~ "Jul",
+                                       Occurrence_Month == 8 ~ "Aug",
+                                       Occurrence_Month == 9 ~ "Sep",
+                                       Occurrence_Month == 10 ~ "Oct",
+                                       Occurrence_Month == 11 ~ "Nov",
+                                       Occurrence_Month == 12 ~ "Dec",))
+
+bicycle_thefts %>% 
+  ggplot(aes(x=Occurrence_Month)) +
+  geom_bar(fill="lightblue", color="black") +
+  labs(title = "Number of Bicycle Thefts by Months",
+      x="Occurence Month",
+      y= "Number of Occurences") +
+  theme_minimal()
+```
+Without any discrepancies, it can be seen that during the months of June to August, every year, bicycle theft is the highest. During this period, the increase can be attributed to the nature of outdoor activities, longer day times and suitable weather conditions. It does not only allow the common people to enjoy the weather but also for the average thief to have a chance at quickly fleeing from the crime spot and making money. Although, there may be several factors affecting this peak. It should not only be inferred that there is the largest number of thefts during this time, but also that more bicycles are usually outside in the street at this time. Therefore, this leads to the idea of whether more bicycles are being stolen at this time of the year, or because more bicycles are outside which allows the thief to have easier access, thereby increasing the number of bicycles stolen. Despite the lack of clarity around this idea, it does not take away from the notion that safety and risk is a huge concern at this time of the year. As we build further into our plot, it is necessary to understand that location matters as well and would help us in determining the areas where we practice most caution. 
+
+
+# The Areas to be Safe 
+
+```{r, echo=F, warning=F, fig.align='right', fig.width=10, fig.height=6, fig.fullwidth=TRUE}
+# Top 10 neighborhoods that have the worst crime rates
+neighbourhood <- bicycle_thefts %>% group_by(Neighbourhood) %>% summarise(n=n())
+
+neighbourhood <- neighbourhood %>% arrange(desc(n))
+neighbourhood <- neighbourhood %>% filter(n > 500)
+
+neighbourhood %>% ggplot(aes(x=Neighbourhood, y=n, group=1)) +
+  geom_point() +
+  geom_line() +
+  labs(y="Number of Crimes 2014 - 2019") +
+  coord_flip() +
+  theme_light()
+```
+While the city of Toronto is very large, and it is hard to condense all the neighbours into one graph, we looked at the most popular areas (more than 500 cases of bicycle theft) in which bicycles were stolen. As observed in this line graph, it can be seen that the Waterfront Communities – The Islands is the most common location for bicycle theft with more than 2000 bicycles being stolen. While this brings us again to the dilemma of whether it is just the location which is the main factor or the idea that the primary activity in this region is bicycling, this should be a red zone for bicyclers to be vary of. From tvisualization, we can also observe that therere is a large number of thefts in Bay Street which is one of Toronto’s most densely populated regions. Other areas include the Church-Yonge Corridor and the Niagara where bicycles have been stolen. Knowing these locations allows the audience to be more careful when visiting these places. This, and our previous insight of June-August being the months in which the largest number of bicycles were stole leads us to also question the type of neighborhood — residential, ial, commercial, or other spaces — which are primary targets for these thieves.
+
+# The Primary Location 
+
+```{r, echo=F, warning=F, fig.align='right', fig.width=10, fig.height=6}
+# Premises that have the worst crime rate and Cost of bikes for respective type of Premise
+bicycle_thefts <- bicycle_thefts %>%
+  mutate(Price_Range_400 = case_when(Cost_of_Bike < 400 ~ "0 - 400",
+                                     400 <= Cost_of_Bike & Cost_of_Bike < 800 ~ "400 - 800",
+                                     800 <= Cost_of_Bike & Cost_of_Bike < 1200 ~ "800 - 1200",
+                                     Cost_of_Bike >= 1200 ~ "> 1200"))
+
+bicycle_thefts <- bicycle_thefts %>% filter(!is.na(Price_Range_400)) 
+
+clean <- bicycle_thefts %>%
+  filter(Occurrence_Month == "Jun" | Occurrence_Month == "Jul" | Occurrence_Month == "Aug")
+
+bicycle_thefts %>% ggplot(aes(fill = Price_Range_400, x=Premise_Type)) +
+  geom_bar(position = "stack", color="black") +
+  labs(title = "Premise Type and Different Ranges",
+       subtitle = "June — August",
+       x = "Premise Type",
+       y ="Count") +
+  scale_fill_brewer() +
+  theme_light()
+```
+In this chart it can be further visualized that the number of bicycles stolen is the greatest around Outside locations, followed by apartments. This leads us to understand that this can be attribute to a lot of people living in the same location. Furthermore, it can be seen that the number of bicycles that are being stolen the most lie with the 400 – 800 CAD range as per the dataset provided. These bikes may have a larger resale value, which might lead to thieves preferring it more.
+
+# The Condition of Recovery 
+
+```{r, echo=F, warning=F, fig.align='right', fig.width=10, fig.height=6}
+status <- bicycle_thefts %>% group_by(Status) %>% summarise(n=n())
+status <- status %>% arrange(n)
+
+status %>%  ggplot(aes(x="", y=n, fill=Status)) +
+  geom_bar(width = 1, stat = "identity", color="black") +
+  coord_polar("y", start=0) +
+  scale_fill_brewer(palette="Blues") +
+  theme_light()
+```
+
+With all the bicycles being stolen, it is also helpful to understand their nature of recovery. As per the pie chart, it can be seen that the largest proportion of bicycles are yet to be recovered, which is a matter of concern. There needs to be more active initiative in locating these bicycles and return it to their owners. 
+
+# Actions, and Final Thoughts 
+
+The last stage of our article — the post climax scene. The writeup attempted to provide the audience with backgrounds, timelines, and locations for the bicycle theft (the action), it is time to draw curtains and understand our key takeaways. The first one, is to exercise extra caution during summer (the period of June to September), when one is outside with the bicycle. Secondly, there are certain areas which are more vulnerable to having bicycles stolen than others, as discussed. Finally, most of the bicycles that are stolen are not recovered. In order to improve on these statistics, the community is encouraged to make their bicycles more distinguishable. For example, it may be helpful to have a small section of the bicycle painted in a bright color so that when someone is describing it in the poster, it can be easier to notice. Also, we would like to acknowledge that not all bicycles that are stolen are reported, and this may lead to an underrepresentation in the data collected. In conclusion, practice caution at all times and purchase good quality locks. The villains in our story are many in number, and to put a stop to their actions, we must all assemble together in reducing bicycle theft. 
